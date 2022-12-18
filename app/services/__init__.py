@@ -1,0 +1,1 @@
+from .invest_service import invest  # noqa
