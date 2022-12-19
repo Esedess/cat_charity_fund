@@ -15,7 +15,7 @@ class ProjectAndDonationModelMixin:
     def not_invested(self) -> int:
         return self.full_amount - self.invested_amount
 
-    def invest(self, investition):
+    def invest(self, investition=0):
         if investition > self.not_invested():
             return
         self.invested_amount += investition

@@ -22,9 +22,9 @@ router = APIRouter()
 @router.get(
     '/',
     response_model=List[DonationDB],
-    response_model_include={'user_id'},
-    # response_model_exclude_none=True,
-    # dependencies=[Depends(current_superuser)],
+    # response_model_include={'user_id'},
+    response_model_exclude_none=True,
+    dependencies=[Depends(current_superuser)],
 )
 async def get_all_donations(
         session: AsyncSession = Depends(get_async_session),
@@ -42,12 +42,14 @@ async def get_all_donations(
 @router.post(
     '/',
     response_model=DonationMiniDB,
+    response_model_exclude_none=True,
     # response_model_exclude={'user_id'},
     # response_model_include={'user_id'},
 )
 async def create_donation(
         donation: DonationCreate,
         session: AsyncSession = Depends(get_async_session),
+    response_model_exclude_none=True,
         # Получаем текущего пользователя и сохраняем в переменную user.
         user: User = Depends(current_user),
 ):
@@ -72,6 +74,7 @@ async def create_donation(
 @router.get(
     '/my',
     response_model=List[DonationMiniDB],
+    response_model_exclude_none=True,
     # Добавляем множество с полями, которые надо исключить из ответа.
     response_model_exclude={'user_id'},
 )

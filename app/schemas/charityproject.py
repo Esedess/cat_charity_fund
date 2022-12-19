@@ -1,18 +1,21 @@
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field, validator, PositiveInt
+from pydantic import BaseModel, Field, validator, PositiveInt, Extra
 from .mixins import ProjectAndDonationSchemaMixin
 
 
 class CharityProjectBase(BaseModel):
-    name: Optional[str] = Field(None, max_length=100)
-    description: Optional[str]
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, min_length=1)
     full_amount: Optional[PositiveInt]
+
+    class Config:
+        extra = Extra.forbid
 
 
 class CharityProjectCreate(CharityProjectBase):
-    name: str = Field(..., max_length=100)
-    description: str
+    name: str = Field(..., min_length=1, max_length=100)
+    description: str = Field(..., min_length=1)
     full_amount: PositiveInt
 
     # @validator('full_amount')
@@ -25,7 +28,7 @@ class CharityProjectCreate(CharityProjectBase):
 
 
 class CharityProjectUpdate(CharityProjectBase):
-    pass
+    ...
 
     @validator('full_amount')
     def full_amount_validator(cls, value: PositiveInt):
