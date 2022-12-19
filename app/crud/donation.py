@@ -1,15 +1,10 @@
-from typing import Optional
-
+from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import User
-from fastapi import Depends
 from app.core.user import current_user
-
-
 from app.crud.base import CRUDBase
-from app.models import Donation
+from app.models import Donation, User
 
 
 class CRUDDonation(CRUDBase):

@@ -8,7 +8,7 @@ from app.core.user import current_superuser, current_user
 from app.crud.donation import donation_crud
 from app.models import User
 from app.schemas.donation import DonationCreate, DonationDB, DonationMiniDB
-from app.services import invest
+from app.services import make_investitions
 
 router = APIRouter()
 
@@ -45,7 +45,7 @@ async def create_donation(
     new_donation = await donation_crud.create(
         donation, session, user
     )
-    await invest(session, new_donation)
+    await make_investitions(session, new_donation)
     return new_donation
 
 
@@ -53,7 +53,6 @@ async def create_donation(
     '/my',
     response_model=List[DonationMiniDB],
     response_model_exclude_none=True,
-    # response_model_exclude={'user_id'},
 )
 async def get_user_donations(
         session: AsyncSession = Depends(get_async_session),

@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Text, Integer, ForeignKey
-
-# from sqlalchemy.orm import relationship
+from sqlalchemy import Column, ForeignKey, Integer, Text
 
 from app.core.db import Base
+
 from .mixins import ProjectAndDonationModelMixin
 
 

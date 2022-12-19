@@ -1,7 +1,7 @@
-from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field, validator, PositiveInt, Extra
-from .mixins import ProjectAndDonationSchemaMixin
+from typing import Optional
+
+from pydantic import BaseModel, Extra, PositiveInt
 
 
 class DonationBase(BaseModel):
@@ -14,31 +14,6 @@ class DonationBase(BaseModel):
 
 class DonationCreate(DonationBase):
     ...
-
-    # class Config:
-    #     extra = Extra.forbid
-        # fields = {'user_id': {'exclude': True}}
-        # __exclude_fields__ = 'user_id'
-
-    # @validator('full_amount')
-    # def full_amount_validator(cls, value: PositiveInt):
-    #     if not value:
-    #         raise ValueError('Требуемая сумма обязательна!')
-    #     # if len(value) < 0:
-    #     #     raise ValueError('Не может быть меньше нуля.')
-    #     return value
-
-
-# class DonationUpdate(DonationBase):
-#     pass
-
-    # @validator('full_amount')
-    # def full_amount_validator(cls, value: PositiveInt):
-    #     if not value:
-    #         raise ValueError('Требуемая сумма обязательна!')
-    #     # if len(value) < 0:
-    #     #     raise ValueError('Не может быть меньше нуля.')
-    #     return value
 
 
 class DonationMiniDB(DonationBase):

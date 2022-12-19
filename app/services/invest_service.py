@@ -22,18 +22,17 @@ async def get_all_unfunded_projects_or_donations(
     return unfunded.scalars().all()
 
 
-def do_invest(proj: CharityProject, donat: Donation) -> None:
+def perform_investition(project: CharityProject, donation: Donation) -> None:
     """
     Расчитывает инвестиции и подготавливает объекты к записи в БД.
     """
-    if proj.not_invested() >= donat.not_invested():
-        investition = donat.not_invested()
-        proj.invest(investition)
-        donat.invest(investition)
-    elif proj.not_invested() < donat.not_invested():
-        investition = proj.not_invested()
-        proj.invest(investition)
-        donat.invest(investition)
+    if project.not_invested() >= donation.not_invested():
+        investition = donation.not_invested()
+    elif project.not_invested() < donation.not_invested():
+        investition = project.not_invested()
+
+    project.invest(investition)
+    donation.invest(investition)
 
 
 def fully_invested_check(
@@ -56,13 +55,18 @@ def fully_invested_check(
     return obj
 
 
-async def invest(session: AsyncSession, new_obj: Union[CharityProject, Donation] = None) -> None:
+async def make_investitions(
+    session: AsyncSession,
+    new_obj: Union[CharityProject, Donation] = None,
+) -> None:
     """
     Общая логика процесса инвестирования.
     Изменяет объекты в БД.
     """
-    projects = await get_all_unfunded_projects_or_donations(session, CharityProject)
-    donations = await get_all_unfunded_projects_or_donations(session, Donation)
+    projects = await get_all_unfunded_projects_or_donations(
+        session, CharityProject)
+    donations = await get_all_unfunded_projects_or_donations(
+        session, Donation)
 
     if not projects or not donations:
         return
@@ -71,13 +75,15 @@ async def invest(session: AsyncSession, new_obj: Union[CharityProject, Donation]
     donations_iter = iter(donations)
     project = next(projects_iter)
     donation = next(donations_iter)
+
     while project and donation:
 
-        do_invest(project, donation)
+        perform_investition(project, donation)
 
         project = fully_invested_check(session, project, projects_iter)
         donation = fully_invested_check(session, donation, donations_iter)
 
     await session.commit()
+
     if new_obj:
         await session.refresh(new_obj)
