@@ -1,35 +1,31 @@
-from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
-from app.models import User
-from app.models import Donation
-from app.models import CharityProject
-from fastapi import HTTPException
 from typing import List, Union
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-async def get_all_unfunded_projects(session: AsyncSession) -> List[CharityProject]:
-    projects = await session.execute(
-        select(CharityProject).where(
-            CharityProject.fully_invested == False
-        ).order_by(CharityProject.create_date.desc())
+from app.models import CharityProject, Donation
+
+
+async def get_all_unfunded_projects_or_donations(
+    session: AsyncSession,
+    model: Union[CharityProject, Donation],
+) -> Union[List[CharityProject], List[Donation]]:
+    """
+    Возвращает список не проинвестированных объектов.
+    Сортируется по дате создания.
+    """
+    unfunded = await session.execute(
+        select(model).where(
+            model.fully_invested == 0
+        ).order_by(model.create_date)
     )
-    return projects.scalars().all()
-    # return projects.scalars().first()
-
-
-async def get_all_not_distributed_donations(session: AsyncSession) -> List[Donation]:
-    donations = await session.execute(
-        select(Donation).where(
-            Donation.fully_invested == False
-        ).order_by(Donation.create_date)
-    )
-    return donations.scalars().all()
-    # return donations.scalars().first()
+    return unfunded.scalars().all()
 
 
 def do_invest(proj: CharityProject, donat: Donation) -> None:
+    """
+    Расчитывает инвестиции и подготавливает объекты к записи в БД.
+    """
     if proj.not_invested() >= donat.not_invested():
         investition = donat.not_invested()
         proj.invest(investition)
@@ -40,25 +36,36 @@ def do_invest(proj: CharityProject, donat: Donation) -> None:
         donat.invest(investition)
 
 
-async def invest(session: AsyncSession, new_obj: Union[CharityProject, Donation]) -> None:
-    print('Инвестируем во всю!')
+def fully_invested_check(
+    session: AsyncSession,
+    obj: Union[CharityProject, Donation],
+    objects_iter: iter
+) -> Union[None, Union[CharityProject, Donation]]:
+    """
+    Проверяет полностью ли проинвестирован объект.
+    Если да - добавляет измененный объект в сессию и возвращает следующий
+    итератор или None.
+    Если нет - возвращает объект обратно.
+    """
+    if obj.fully_invested:
+        session.add(obj)
+        try:
+            return next(objects_iter)
+        except StopIteration:
+            return None
+    return obj
 
-    projects = await get_all_unfunded_projects(session)
-    donations = await get_all_not_distributed_donations(session)
-    # db_obj.scalars().first()
 
-    if not projects:
+async def invest(session: AsyncSession, new_obj: Union[CharityProject, Donation] = None) -> None:
+    """
+    Общая логика процесса инвестирования.
+    Изменяет объекты в БД.
+    """
+    projects = await get_all_unfunded_projects_or_donations(session, CharityProject)
+    donations = await get_all_unfunded_projects_or_donations(session, Donation)
+
+    if not projects or not donations:
         return
-        # raise HTTPException(
-        #     status_code=404,
-        #     detail='Некуда инвестировать!'
-        # )
-    if not donations:
-        return
-        # raise HTTPException(
-        #     status_code=404,
-        #     detail='Нечего инвестировать!'
-        # )
 
     projects_iter = iter(projects)
     donations_iter = iter(donations)
@@ -67,36 +74,10 @@ async def invest(session: AsyncSession, new_obj: Union[CharityProject, Donation]
     while project and donation:
 
         do_invest(project, donation)
-        # if project.not_invested() >= donation.not_invested():
-        #     investition = donation.not_invested()
-        #     project.invest(investition)
-        #     donation.invest(investition)
-        # elif project.not_invested() < donation.not_invested():
-        #     investition = project.not_invested()
-        #     project.invest(investition)
-        #     donation.invest(investition)
 
-        if project.fully_invested:
-            session.add(project)
-            try:
-                project = next(projects_iter)
-            except StopIteration:
-                project = None
-        if donation.fully_invested:
-            session.add(donation)
-            try:
-                donation = next(donations_iter)
-            except StopIteration:
-                donation = None
-    # print(projects[1].name)
-    # print(projects.not_invested())
-    # projects.invest(500)
-    # print(projects.not_invested())
+        project = fully_invested_check(session, project, projects_iter)
+        donation = fully_invested_check(session, donation, donations_iter)
 
-    # session.add(projects)
-    # session.add(donations)
     await session.commit()
-    # await session.refresh(projects)
-    await session.refresh(new_obj)
-    # print(donations)
-    return projects
+    if new_obj:
+        await session.refresh(new_obj)
