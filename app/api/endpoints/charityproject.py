@@ -1,4 +1,3 @@
-# charity_project_router
 from typing import List
 
 from fastapi import APIRouter, Depends
@@ -18,20 +17,6 @@ from ..validators import (check_charity_project_exists,
                           check_project_name_duplicate)
 
 router = APIRouter()
-
-
-# @router.get(
-#     '/test',
-#     # response_model=list[CharityProjectDB],
-#     # response_model_exclude_none=True,
-# )
-# async def get_test_invest(
-#         session: AsyncSession = Depends(get_async_session),
-# ):
-#     """Тест инвестиций."""
-#     # await invest(session)
-#     projects = await invest(session)
-#     return projects
 
 
 @router.get(
@@ -69,7 +54,6 @@ async def create_charity_project(
 @router.delete(
     '/{project_id}',
     response_model=CharityProjectDB,
-    # response_model_exclude_none=True,
     dependencies=[Depends(current_superuser)],
 )
 async def delete_charity_project(
@@ -83,7 +67,6 @@ async def delete_charity_project(
     project = await check_charity_project_exists(project_id, session)
     check_charity_project_invested_before_delete(project)
     check_charity_project_not_closed(project)
-    # check_charity_project_invested_before_delete(project)
     project = await charity_project_crud.remove(project, session)
     return project
 
@@ -91,7 +74,6 @@ async def delete_charity_project(
 @router.patch(
     '/{project_id}',
     response_model=CharityProjectDB,
-    # response_model_exclude_none=True,
     dependencies=[Depends(current_superuser)],
 )
 async def update_charity_project(
@@ -114,9 +96,8 @@ async def update_charity_project(
     if obj_in.full_amount is not None:
         check_charity_project_full_amount_before_edit(
             obj_in.full_amount, project)
-        # project.invest()
 
     project = await charity_project_crud.update(
         project, obj_in, session)
-    # project.invest()
+
     return project
