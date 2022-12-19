@@ -1,4 +1,6 @@
 # charity_project_router
+from typing import Dict, List, Set, Tuple
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,13 +34,14 @@ async def get_test_invest(
         session: AsyncSession = Depends(get_async_session),
 ):
     """Тест инвестиций."""
+    # await invest(session)
     projects = await invest(session)
     return projects
 
 
 @router.get(
     '/',
-    response_model=list[CharityProjectDB],
+    response_model=List[CharityProjectDB],
     # response_model_exclude_none=True,
 )
 async def get_all_charity_projects(
@@ -70,7 +73,7 @@ async def create_charity_project(
     await check_project_name_duplicate(new_project.name, session)
     # Замените вызов функции на вызов метода.
     new_project = await charity_project_crud.create(new_project, session)
-    await invest(session)
+    await invest(session, new_project)
     return new_project
 
 

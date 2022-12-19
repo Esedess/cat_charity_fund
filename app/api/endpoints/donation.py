@@ -1,3 +1,6 @@
+from typing import Dict, List, Set, Tuple
+
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +21,7 @@ router = APIRouter()
 
 @router.get(
     '/',
-    response_model=list[DonationDB],
+    response_model=List[DonationDB],
     response_model_include={'user_id'},
     # response_model_exclude_none=True,
     # dependencies=[Depends(current_superuser)],
@@ -62,13 +65,13 @@ async def create_donation(
         # Передаём объект пользователя в метод создания объекта бронирования.
         donation, session, user
     )
-    await invest(session)
+    await invest(session, new_donation)
     return new_donation
 
 
 @router.get(
     '/my',
-    response_model=list[DonationMiniDB],
+    response_model=List[DonationMiniDB],
     # Добавляем множество с полями, которые надо исключить из ответа.
     response_model_exclude={'user_id'},
 )
