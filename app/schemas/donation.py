@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Extra, PositiveInt
+from pydantic import BaseModel, Extra, NonNegativeInt, PositiveInt
 
 
 class DonationBase(BaseModel):
@@ -26,7 +26,7 @@ class DonationMiniDB(DonationBase):
 
 class DonationDB(DonationMiniDB):
     user_id: int
-    invested_amount: int
+    invested_amount: NonNegativeInt
     fully_invested: bool
     close_date: Optional[datetime]
 

@@ -46,13 +46,13 @@ def fully_invested_check(
     итератор или None.
     Если нет - возвращает объект обратно.
     """
-    if obj.fully_invested:
-        session.add(obj)
-        try:
-            return next(objects_iter)
-        except StopIteration:
-            return None
-    return obj
+    if not obj.fully_invested:
+        return obj
+    session.add(obj)
+    try:
+        return next(objects_iter)
+    except StopIteration:
+        return None
 
 
 async def make_investitions(
